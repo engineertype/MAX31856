@@ -50,15 +50,15 @@ MAX31856::MAX31856(int sdi, int sdo, int cs, int clk)
     _clk = clk;
 
     // Initialize all the data pins
-	pinMode(_sdi, OUTPUT);
-	pinMode(_cs, OUTPUT);
-	pinMode(_clk, OUTPUT);
+    pinMode(_sdi, OUTPUT);
+    pinMode(_cs, OUTPUT);
+    pinMode(_clk, OUTPUT);
     // Use a pullup on the data line to be able to detect "no communication"
-	pinMode(_sdo, INPUT_PULLUP);
+    pinMode(_sdo, INPUT_PULLUP);
 
-	// Default output pins state
-	digitalWrite(_cs, HIGH);
-	digitalWrite(_clk, HIGH);
+    // Default output pins state
+    digitalWrite(_cs, HIGH);
+    digitalWrite(_clk, HIGH);
 
     // Set up the shadow registers with the default values
     byte reg[NUM_REGISTERS] = {0x00,0x03,0xff,0x7f,0xc0,0x7f,0xff,0x80,0,0,0,0};
@@ -74,7 +74,7 @@ void MAX31856::writeRegister(byte registerNum, byte data)
     if (registerNum >= NUM_REGISTERS)
         return;
 
-	// Select the MAX31856 chip
+    // Select the MAX31856 chip
     digitalWrite(_cs, LOW);
 
     // Write the register number, with the MSB set to indicate a write
@@ -97,17 +97,17 @@ void MAX31856::writeRegister(byte registerNum, byte data)
 // Returns the temperature, or an error (FAULT_OPEN, FAULT_VOLTAGE or NO_MAX31856)
 double	MAX31856::readThermocouple(unit_t unit)
 {
-	double temperature;
-	long data;
+    double temperature;
+    long data;
 
-	// Select the MAX31856 chip
+    // Select the MAX31856 chip
     digitalWrite(_cs, LOW);
 
     // Read data starting with register 0x0c
     writeByte(READ_OPERATION(0x0c));
 
-	// Read registers
-	data = readData();
+    // Read registers
+    data = readData();
 
     // Deselect MAX31856 chip
     digitalWrite(_cs, HIGH);
@@ -141,8 +141,8 @@ double	MAX31856::readThermocouple(unit_t unit)
             temperature = (temperature * 9.0/5.0)+ 32;
     }
 
-	// Return the temperature
-	return (temperature);
+    // Return the temperature
+    return (temperature);
 }
 
 
@@ -151,17 +151,17 @@ double	MAX31856::readThermocouple(unit_t unit)
 // will return NO_MAX31856 if not.
 double	MAX31856::readJunction(unit_t unit)
 {
-	double temperature;
-	long data, temperatureOffset;
+    double temperature;
+    long data, temperatureOffset;
 
-	// Select the MAX31856 chip
+    // Select the MAX31856 chip
     digitalWrite(_cs, LOW);
 
     // Read data starting with register 8
     writeByte(READ_OPERATION(8));
 
-	// Read registers
-	data = readData();
+    // Read registers
+    data = readData();
 
     // Deselect MAX31856 chip
     digitalWrite(_cs, HIGH);
@@ -202,8 +202,8 @@ double	MAX31856::readJunction(unit_t unit)
     if (unit == FAHRENHEIT)
         temperature = (temperature * 9.0/5.0)+ 32;
 
-	// Return the temperature
-	return (temperature);
+    // Return the temperature
+    return (temperature);
 }
 
 
@@ -211,16 +211,16 @@ double	MAX31856::readJunction(unit_t unit)
 // This is a valid temperature, but could indicate that the registers need to be initialized.
 double MAX31856::verifyMAX31856()
 {
-	long data, reg;
+    long data, reg;
 
-	// Select the MAX31856 chip
+    // Select the MAX31856 chip
     digitalWrite(_cs, LOW);
 
     // Read data starting with register 0
     writeByte(READ_OPERATION(0));
 
-	// Read registers
-	data = readData();
+    // Read registers
+    data = readData();
 
     // Deselect MAX31856 chip
     digitalWrite(_cs, HIGH);
@@ -236,7 +236,7 @@ double MAX31856::verifyMAX31856()
         return 0;
 
     // Communication to the IC is working, but the register values are not correct
-	// Select the MAX31856 chip
+    // Select the MAX31856 chip
     digitalWrite(_cs, LOW);
 
     // Start writing from register 0
@@ -258,22 +258,22 @@ double MAX31856::verifyMAX31856()
 // so no delay is required between signal toggles.
 long MAX31856::readData()
 {
-	long data = 0;
+    long data = 0;
     unsigned long bitMask = 0x80000000;
 	
-	// Shift in 32-bit of data
-	while (bitMask)
-	{
-		digitalWrite(_clk, LOW);
+    // Shift in 32-bit of data
+    while (bitMask)
+    {
+        digitalWrite(_clk, LOW);
 
-		// Store the data bit
-		if (digitalRead(_sdo))
-			data += bitMask;
+        // Store the data bit
+        if (digitalRead(_sdo))
+            data += bitMask;
 
-		digitalWrite(_clk, HIGH);
+        digitalWrite(_clk, HIGH);
 
         bitMask >>= 1;
-	}
+    }
 	
 	return(data);
 }
@@ -283,18 +283,18 @@ long MAX31856::readData()
 // so no delay is required between signal toggles.
 void MAX31856::writeByte(byte data)
 {
-	byte bitMask = 0x80;
+    byte bitMask = 0x80;
 
-	// Shift out 8 bits of data
-	while (bitMask)
-	{
-		// Write out the data bit.  Has to be held for 35ns, so no delay required
+    // Shift out 8 bits of data
+    while (bitMask)
+    {
+        // Write out the data bit.  Has to be held for 35ns, so no delay required
         digitalWrite(_sdi, data & bitMask? HIGH: LOW);
 
-		digitalWrite(_clk, LOW);
+        digitalWrite(_clk, LOW);
         digitalWrite(_clk, HIGH);
 
         bitMask >>= 1;
-	}
+    }
 }
 
