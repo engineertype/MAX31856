@@ -13,13 +13,14 @@
 //
 // Change History:
 // 25 June 2015        Initial Version
+// 31 July 2015        Fixed spelling and formatting problems
 
 #ifndef MAX31856_H
 #define MAX31856_H
 
 #include "Arduino.h"
 
-// Configuration Registers
+// MAX31856 Registers
 // Register 0x00: CR0
 #define CR0_AUTOMATIC_CONVERSION                0x80
 #define CR0_ONE_SHOT                            0x40
@@ -75,13 +76,10 @@
 #define	FAULT_OPEN                              10000   // No thermocouple
 #define	FAULT_VOLTAGE                           10001   // Under/over voltage error.  Wrong thermocouple type?
 #define NO_MAX31856                             10002   // MAX31856 not communicating or not connected
-#define IS_MAX31856_ERROR                        (x >= FAULT_OPEN && x <= NO_MAX31856)
+#define IS_MAX31856_ERROR(x)                    (x == FAULT_OPEN && x <= NO_MAX31856)
 
-enum	unit_t
-{
-	CELSIUS,
-	FAHRENHEIT
-};
+#define CELCIUS                                 0
+#define FAHRENHEIT                              1
 
 
 class	MAX31856
@@ -90,8 +88,8 @@ public:
     MAX31856(int, int, int, int);           // SDI, SDO, CS, CLK (DRDY and FAULT are not used)
 
     void    writeRegister(byte, byte);
-    double  readThermocouple(unit_t	unit);
-    double  readJunction(unit_t	unit);
+    double  readThermocouple(byte unit);
+    double  readJunction(byte unit);
 
 private:
     long    readData();

@@ -15,27 +15,28 @@
 // ==============================
 // DRDY and FAULT lines are not used in this driver. DRDY is useful for low-power mode so samples are only taken when
 // needed; this driver assumes power isn't an issue.  The FAULT line can be used to generate an interrupt in the host
-// processor when a fault occurs.  This library reads the fault register every time a reading is taken, and will return
-// a fault error is there is one.  The MAX31856 has sophisticated usage scenarios involving FAULT.  For example, low
-// and high temperature limits can be set, and the FAULT line triggers when these temperatures are breached. This
-// is beyond the scope of this sample library.  The assumption is that most applications will be polling for temperature
-// readings - but it is good to know these features are supported by the hardware.
+// processor when a fault occurs.  This library reads the fault register every time a reading is taken, and will
+// return a fault error if there is one.  The MAX31856 has sophisticated usage scenarios involving FAULT.  For
+// example, low and high temperature limits can be set, and the FAULT line triggers when these temperatures are
+// breached. This is beyond the scope of this sample library.  The assumption is that most applications will be
+// polling for temperature readings - but it is good to know these features are supported by the hardware.
 //
-// The MAX31856 differs from earlier thermocouple IC's in that it has registers that must be configured before readings
-// can be taken.  This makes it very flexible and powerful, but one concern is power loss to the IC.  The IC should be
-// as close to the cold junction as possible, which might mean there is a cable connecting the breakout board to the
-// host processor.  If this cable is disconnected and reconnected (MAX31856 loses power) then the registers must be
-// reinitialized.  This library detects this condition and will automatically reconfigure the registers.  This simplifies
-// the software running on the host.
+// The MAX31856 differs from earlier thermocouple IC's in that it has registers that must be configured before
+// readings can be taken.  This makes it very flexible and powerful, but one concern is power loss to the IC.  The IC
+// should be as close to the cold junction as possible, which might mean there is a cable connecting the breakout
+// board to the host processor.  If this cable is disconnected and reconnected (MAX31856 loses power) then the
+// registers must be reinitialized.  This library detects this condition and will automatically reconfigure the
+// registers.  This simplifies the software running on the host.
 //
-// A lot of the configuration options appear in the .H file.  Of particular note is the line frequency filtering,
-// which defaults to 60Hz (USA and others).  If your line voltage is 50Hz you should set CR0_NOISE_FILTER_50HZ.
+// A lot of configuration options appear in the .H file.  Of particular note is the line frequency filtering, which
+// defaults to 60Hz (USA and others).  If your line voltage is 50Hz you should set CR0_NOISE_FILTER_50HZ.
 //
 // This library handles the full range of temperatures, including negative temperatures.
 //
 //
 // Change History:
 // 25 June 2015        Initial Version
+// 31 July 2015        Fixed spelling and formatting problems
 
 #include	"MAX31856.h"
 
@@ -86,7 +87,7 @@ void MAX31856::writeRegister(byte registerNum, byte data)
     // Deselect MAX31856 chip
     digitalWrite(_cs, HIGH);
 
-    // Save the register value, in case they need to be restored
+    // Save the register value, in case the registers need to be restored
     _registers[registerNum] = data;
 }
 
@@ -95,7 +96,7 @@ void MAX31856::writeRegister(byte registerNum, byte data)
 // the conversion takes place in the background within 155 ms, or longer depending on the
 // number of samples in each reading (see CR1).
 // Returns the temperature, or an error (FAULT_OPEN, FAULT_VOLTAGE or NO_MAX31856)
-double	MAX31856::readThermocouple(unit_t unit)
+double	MAX31856::readThermocouple(byte unit)
 {
     double temperature;
     long data;
@@ -106,7 +107,7 @@ double	MAX31856::readThermocouple(unit_t unit)
     // Read data starting with register 0x0c
     writeByte(READ_OPERATION(0x0c));
 
-    // Read registers
+    // Read 4 registers
     data = readData();
 
     // Deselect MAX31856 chip
@@ -123,9 +124,9 @@ double	MAX31856::readThermocouple(unit_t unit)
         return NO_MAX31856;
 
     // Was there an error?
-    if (data &0x01)
+    if (data & SR_FAULT_OPEN)
         temperature = FAULT_OPEN;
-    else if (data & 0x02)
+    else if (data & SR_FAULT_UNDER_OVER_VOLTAGE)
         temperature = FAULT_VOLTAGE;
     else {
         // Strip the unused bits and the Fault Status Register
@@ -149,7 +150,7 @@ double	MAX31856::readThermocouple(unit_t unit)
 // Read the junction (IC) temperature either in Degree Celsius or Fahrenheit.
 // This routine also makes sure that communication with the MAX31856 is working and
 // will return NO_MAX31856 if not.
-double	MAX31856::readJunction(unit_t unit)
+double	MAX31856::readJunction(byte unit)
 {
     double temperature;
     long data, temperatureOffset;
@@ -160,7 +161,7 @@ double	MAX31856::readJunction(unit_t unit)
     // Read data starting with register 8
     writeByte(READ_OPERATION(8));
 
-    // Read registers
+    // Read 4 registers
     data = readData();
 
     // Deselect MAX31856 chip
@@ -219,7 +220,7 @@ double MAX31856::verifyMAX31856()
     // Read data starting with register 0
     writeByte(READ_OPERATION(0));
 
-    // Read registers
+    // Read 4 registers
     data = readData();
 
     // Deselect MAX31856 chip
@@ -249,7 +250,7 @@ double MAX31856::verifyMAX31856()
     // Deselect MAX31856 chip
     digitalWrite(_cs, HIGH);
 
-    // For now, return an error but soon valid temperatures will be read
+    // For now, return an error but soon valid temperatures will be returned
     return NO_MAX31856;
 }
 
@@ -261,7 +262,7 @@ long MAX31856::readData()
     long data = 0;
     unsigned long bitMask = 0x80000000;
 	
-    // Shift in 32-bit of data
+    // Shift in 32 bits of data
     while (bitMask)
     {
         digitalWrite(_clk, LOW);
@@ -275,7 +276,7 @@ long MAX31856::readData()
         bitMask >>= 1;
     }
 	
-	return(data);
+    return(data);
 }
 
 
