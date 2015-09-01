@@ -78,7 +78,7 @@
 #define NO_MAX31856                             10002   // MAX31856 not communicating or not connected
 #define IS_MAX31856_ERROR(x)                    (x == FAULT_OPEN && x <= NO_MAX31856)
 
-#define CELCIUS                                 0
+#define CELSIUS                                 0
 #define FAHRENHEIT                              1
 
 
