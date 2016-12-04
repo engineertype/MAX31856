@@ -256,7 +256,8 @@ double MAX31856::verifyMAX31856()
 
 
 // Read in 32 bits of data from MAX31856 chip. Minimum clock pulse width is 100 ns
-// so no delay is required between signal toggles.
+// so this could be made faster (using NOP).  However, make sure it works on all
+// microcontrollers
 long MAX31856::readData()
 {
     long data = 0;
@@ -266,12 +267,14 @@ long MAX31856::readData()
     while (bitMask)
     {
         digitalWrite(_clk, LOW);
+        delayMicroseconds(2);
 
         // Store the data bit
         if (digitalRead(_sdo))
             data += bitMask;
 
         digitalWrite(_clk, HIGH);
+        delayMicroseconds(2);
 
         bitMask >>= 1;
     }
@@ -281,7 +284,8 @@ long MAX31856::readData()
 
 
 // Write out 8 bits of data to the MAX31856 chip. Minimum clock pulse width is 100 ns
-// so no delay is required between signal toggles.
+// so this could be made faster (using NOP).  However, make sure it works on all
+// microcontrollers
 void MAX31856::writeByte(byte data)
 {
     byte bitMask = 0x80;
@@ -289,11 +293,13 @@ void MAX31856::writeByte(byte data)
     // Shift out 8 bits of data
     while (bitMask)
     {
-        // Write out the data bit.  Has to be held for 35ns, so no delay required
+        // Write out the data bit.  Has to be held for 35ns
         digitalWrite(_sdi, data & bitMask? HIGH: LOW);
 
         digitalWrite(_clk, LOW);
+        delayMicroseconds(2);
         digitalWrite(_clk, HIGH);
+        delayMicroseconds(2);
 
         bitMask >>= 1;
     }
