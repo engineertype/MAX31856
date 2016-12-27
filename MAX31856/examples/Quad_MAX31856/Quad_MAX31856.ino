@@ -75,12 +75,6 @@ MAX31856 *TemperatureSensor[NUM_MAX31856] = {
 };
 
 void setup() {
-pinMode(A6, OUTPUT);
-pinMode(7, OUTPUT);
-digitalWrite(A6, HIGH);
-digitalWrite(7, LOW);
-
-
   // Display temperatures using the serial port
   Serial.begin(9600);
   delay(3000);
