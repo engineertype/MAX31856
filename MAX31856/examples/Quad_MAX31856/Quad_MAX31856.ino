@@ -37,24 +37,28 @@
 // them to go down just reverse the wires.  No damage will be done to the MAX31856.
 //
 // Change History:
-// 25 June 2015        Initial Version
-// 31 July 2015        Fixed spelling and formatting problems
+// 26 December 2016    Initial Version
 
 
 #include <MAX31856.h>
 
-// This sample code works with this breakout board:
-// http://www.ebay.com/itm/301671408961 (5V)
-// http://www.ebay.com/itm/301671398870 (3.3V)
+// This sample code works with these breakout boards:
+// http://www.ebay.com/itm/252040638597 (5V)
+// http://www.ebay.com/itm/252040641643 (3.3V)
 //
 // The power requirement for the board is less than 2mA.  Most microcontrollers can source or sink a lot more
 // than that one each I/O pin.  For example, the ATmega328 supports up to 20mA.  So it is possible to power the
 // board using I/O pins for power - so you can turn the board on and off (if you want to).
 // FAULT and DRDY are not used by the library (see above)
 #define SCK    3
-#define CS     4
-#define SDI    5
-#define SDO    6
+#define CS0    4
+#define CS1    5
+#define CS2    6
+#define CS3    7
+#define SDI    8
+#define SDO    9
+
+#define NUM_MAX31856   4
 
 // MAX31856 Initial settings (see MAX31856.h and the MAX31856 datasheet)
 // The default noise filter is 60Hz, suitable for the USA
@@ -62,40 +66,61 @@
 #define CR1_INIT  (CR1_AVERAGE_2_SAMPLES + CR1_THERMOCOUPLE_TYPE_K)
 #define MASK_INIT (~(MASK_VOLTAGE_UNDER_OVER_FAULT + MASK_THERMOCOUPLE_OPEN_FAULT))
 
-MAX31856 *temperature;
+// Create the temperature object, defining the pins used for communication
+MAX31856 *TemperatureSensor[NUM_MAX31856] = {
+  new MAX31856(SDI, SDO, CS0, SCK),
+  new MAX31856(SDI, SDO, CS1, SCK),
+  new MAX31856(SDI, SDO, CS2, SCK),
+  new MAX31856(SDI, SDO, CS3, SCK)
+};
 
 void setup() {
+pinMode(A6, OUTPUT);
+pinMode(7, OUTPUT);
+digitalWrite(A6, HIGH);
+digitalWrite(7, LOW);
+
+
   // Display temperatures using the serial port
   Serial.begin(9600);
   delay(3000);
-  Serial.println("MAX31856 Sample application");
-  
-  // Define the pins used to communicate with the MAX31856
-  temperature = new MAX31856(SDI, SDO, CS, SCK);
+  Serial.println("Quad MAX31856 Sample application");
   
   // Initializing the MAX31855's registers
-  temperature->writeRegister(REGISTER_CR0, CR0_INIT);
-  temperature->writeRegister(REGISTER_CR1, CR1_INIT);
-  temperature->writeRegister(REGISTER_MASK, MASK_INIT);
+  for (int i=0; i<NUM_MAX31856; i++) {
+    TemperatureSensor[i]->writeRegister(REGISTER_CR0, CR0_INIT);
+    TemperatureSensor[i]->writeRegister(REGISTER_CR1, CR1_INIT);
+    TemperatureSensor[i]->writeRegister(REGISTER_MASK, MASK_INIT);
+  }
   
-  // Wait for the first sample to be taken
+  // Wait for the first samples to be taken
   delay(200);
 }
 
 
 void loop () {
-  float t;
-  
-  // Display the junction (IC) temperature
-  // Sometimes the junction temperature is not provided until a thermocouple is attached
-  t = temperature->readJunction(CELSIUS);
-  Serial.print("Junction (IC) temperature =");
-  printTemperature(t);
-  
-  // Display the thermocouple temperature
-  t = temperature->readThermocouple(CELSIUS);
-  Serial.print("  Thermocouple temperature = ");
-  printTemperature(t);
+  for (int i=0; i<NUM_MAX31856; i++) {
+    // Display the junction (IC) temperature first
+    // Sometimes the junction temperature is not provided until a thermocouple is attached
+    double temperature = TemperatureSensor[i]->readJunction(CELSIUS);
+    if (temperature == NO_MAX31856)
+      continue;
+    Serial.print("J");
+    Serial.print(i);
+    Serial.print("=");
+    printTemperature(temperature);
+
+    // Display the thermocouple temperature
+    temperature = TemperatureSensor[i]->readThermocouple(CELSIUS);
+    if (temperature == NO_MAX31856)
+      continue;
+    Serial.print("T");
+    Serial.print(i);
+    Serial.print("=");
+    printTemperature(temperature);
+
+    Serial.print("\t");
+  }
   
   Serial.println();
   delay(1000);
