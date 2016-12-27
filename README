@@ -31,11 +31,12 @@ This library handles the full range of temperatures, including negative temperat
 Change History:
 25 June 2015        Initial Version
 31 July 2015        Fixed spelling and formatting problems
+26 December 2016    Added examples for Dual and Quad boards
 
 
 To install the MAX31856 library, please refer to:
 http://arduino.cc/en/Guide/Libraries
 
-Peter Easton 2015
+Peter Easton 2017
 Whizoo.com
 
